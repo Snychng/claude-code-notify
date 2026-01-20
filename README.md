@@ -21,14 +21,14 @@ macOS 通知工具，用于 Claude Code 完成任务时发送系统通知，支�
 
 ```bash
 mkdir -p ~/.local/bin
-mkdir -p ~/.local/share/claude-notify/ClaudeNotify.app/Contents/{MacOS,Resources}
+mkdir -p ~/.local/share/claude-code-notify/ClaudeCodeNotify.app/Contents/{MacOS,Resources}
 ```
 
 ### 2. 编译 Swift 应用
 
 ```bash
-swiftc -o ~/.local/share/claude-notify/ClaudeNotify.app/Contents/MacOS/ClaudeNotify \
-    ClaudeNotify.swift \
+swiftc -o ~/.local/share/claude-code-notify/ClaudeCodeNotify.app/Contents/MacOS/ClaudeCodeNotify \
+    ClaudeCodeNotify.swift \
     -framework Cocoa \
     -O
 ```
@@ -37,23 +37,23 @@ swiftc -o ~/.local/share/claude-notify/ClaudeNotify.app/Contents/MacOS/ClaudeNot
 
 ```bash
 cp /Applications/Claude.app/Contents/Resources/electron.icns \
-   ~/.local/share/claude-notify/ClaudeNotify.app/Contents/Resources/AppIcon.icns
+   ~/.local/share/claude-code-notify/ClaudeCodeNotify.app/Contents/Resources/AppIcon.icns
 ```
 
 ### 4. 创建 Info.plist
 
 ```bash
-cat > ~/.local/share/claude-notify/ClaudeNotify.app/Contents/Info.plist << 'EOF'
+cat > ~/.local/share/claude-code-notify/ClaudeCodeNotify.app/Contents/Info.plist << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>ClaudeNotify</string>
+    <string>ClaudeCodeNotify</string>
     <key>CFBundleIdentifier</key>
-    <string>com.claude.notify</string>
+    <string>com.claude.code.notify</string>
     <key>CFBundleName</key>
-    <string>Claude Notify</string>
+    <string>Claude Code Notify</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundlePackageType</key>
@@ -68,8 +68,8 @@ EOF
 ### 5. 安装通知脚本
 
 ```bash
-cp claude-notify ~/.local/bin/claude-notify
-chmod +x ~/.local/bin/claude-notify
+cp claude-code-notify ~/.local/bin/claude-code-notify
+chmod +x ~/.local/bin/claude-code-notify
 
 # 确保 ~/.local/bin 在 PATH 中
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
@@ -85,11 +85,11 @@ source ~/.zshrc
   "hooks": {
     "Notification": [{
       "matcher": "",
-      "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notify" }]
+      "hooks": [{ "type": "command", "command": "~/.local/bin/claude-code-notify" }]
     }],
     "Stop": [{
       "matcher": "",
-      "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notify" }]
+      "hooks": [{ "type": "command", "command": "~/.local/bin/claude-code-notify" }]
     }]
   }
 }
@@ -104,18 +104,18 @@ source ~/.zshrc
 ### 手动测试
 
 ```bash
-claude-notify "测试消息"
+claude-code-notify "测试消息"
 ```
 
 ## 自定义配置
 
 ### 修改图标
 
-替换 `~/.local/share/claude-notify/ClaudeNotify.app/Contents/Resources/AppIcon.icns` 文件。
+替换 `~/.local/share/claude-code-notify/ClaudeCodeNotify.app/Contents/Resources/AppIcon.icns` 文件。
 
 ### 修改跳转的终端应用
 
-默认跳转到 Ghostty 终端的 "Claude Code" 窗口。如需修改，编辑 `ClaudeNotify.swift` 中的 AppleScript：
+默认跳转到 Ghostty 终端的 "Claude Code" 窗口。如需修改，编辑 `ClaudeCodeNotify.swift` 中的 AppleScript：
 
 ```swift
 // 跳转到 iTerm2
@@ -133,8 +133,8 @@ tell application "Terminal" to activate
 
 ## 文件说明
 
-- `claude-notify` - 启动脚本
-- `ClaudeNotify.swift` - Swift 通知应用源码
+- `claude-code-notify` - 启动脚本
+- `ClaudeCodeNotify.swift` - Swift 通知应用源码
 
 ## License
 

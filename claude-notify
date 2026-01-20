@@ -1,2 +1,0 @@
-#!/bin/bash
-~/.local/share/claude-notify/ClaudeNotify.app/Contents/MacOS/ClaudeNotify "${1:-等待输入}" &
