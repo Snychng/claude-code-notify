@@ -6,30 +6,68 @@ macOS 通知工具，用于 Claude Code 完成任务时发送系统通知，支�
 
 - 🔔 Claude Code 完成任务时发送 macOS 系统通知
 - 🎨 自定义通知图标（默认使用 Claude 图标）
-- 🖱️ 点击通知自动跳转到运行 Claude Code 的终端窗口
+- 🖱️ 点击通知自动跳转到运行 Claude Code 的终端窗口（Ghostty）
 - 🔊 通知提示音
 
 ## 依赖
 
 - macOS 10.14+
-- [terminal-notifier](https://github.com/julienXX/terminal-notifier)：`brew install terminal-notifier`
+- Xcode Command Line Tools（用于编译 Swift）
 - Claude 桌面应用（用于图标）
 
 ## 安装
 
-### 1. 安装 terminal-notifier
+### 1. 创建目录
 
 ```bash
-brew install terminal-notifier
+mkdir -p ~/.local/bin
+mkdir -p ~/.local/share/claude-notify/ClaudeNotify.app/Contents/{MacOS,Resources}
 ```
 
-### 2. 安装通知脚本
+### 2. 编译 Swift 应用
 
 ```bash
-# 创建目录
-mkdir -p ~/.local/bin
+swiftc -o ~/.local/share/claude-notify/ClaudeNotify.app/Contents/MacOS/ClaudeNotify \
+    ClaudeNotify.swift \
+    -framework Cocoa \
+    -O
+```
 
-# 复制脚本
+### 3. 复制图标
+
+```bash
+cp /Applications/Claude.app/Contents/Resources/electron.icns \
+   ~/.local/share/claude-notify/ClaudeNotify.app/Contents/Resources/AppIcon.icns
+```
+
+### 4. 创建 Info.plist
+
+```bash
+cat > ~/.local/share/claude-notify/ClaudeNotify.app/Contents/Info.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>ClaudeNotify</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.claude.notify</string>
+    <key>CFBundleName</key>
+    <string>Claude Notify</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSUIElement</key>
+    <true/>
+</dict>
+</plist>
+EOF
+```
+
+### 5. 安装通知脚本
+
+```bash
 cp claude-notify ~/.local/bin/claude-notify
 chmod +x ~/.local/bin/claude-notify
 
@@ -38,7 +76,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-### 3. 配置 Claude Code Hooks
+### 6. 配置 Claude Code Hooks
 
 编辑 `~/.claude/settings.json`，添加以下配置：
 
@@ -73,69 +111,30 @@ claude-notify "测试消息"
 
 ### 修改图标
 
-编辑 `claude-notify` 脚本，修改 `-contentImage` 参数：
-
-```bash
--contentImage "/path/to/your/icon.icns"
-```
+替换 `~/.local/share/claude-notify/ClaudeNotify.app/Contents/Resources/AppIcon.icns` 文件。
 
 ### 修改跳转的终端应用
 
-默认跳转到 Ghostty 终端的 "Claude Code" 窗口。如需修改，编辑脚本中的 `ACTIVATE_CMD`：
+默认跳转到 Ghostty 终端的 "Claude Code" 窗口。如需修改，编辑 `ClaudeNotify.swift` 中的 AppleScript：
 
-```bash
-# 跳转到 iTerm2
-ACTIVATE_CMD='osascript -e "tell application \"iTerm2\" to activate"'
+```swift
+// 跳转到 iTerm2
+let script = """
+tell application "iTerm2" to activate
+"""
 
-# 跳转到 Terminal.app
-ACTIVATE_CMD='osascript -e "tell application \"Terminal\" to activate"'
+// 跳转到 Terminal.app
+let script = """
+tell application "Terminal" to activate
+"""
 ```
+
+修改后重新编译即可。
 
 ## 文件说明
 
-- `claude-notify` - 主脚本，使用 terminal-notifier 发送通知
-- `ClaudeNotify.swift` - Swift 版本（备用方案，支持原生 API）
-
-## Swift 版本（可选）
-
-如果你更喜欢使用原生 Swift 应用：
-
-```bash
-# 创建应用目录
-mkdir -p ~/.local/share/claude-notify/ClaudeNotify.app/Contents/{MacOS,Resources}
-
-# 编译 Swift 应用
-swiftc -o ~/.local/share/claude-notify/ClaudeNotify.app/Contents/MacOS/ClaudeNotify \
-    ClaudeNotify.swift \
-    -framework Cocoa \
-    -O
-
-# 复制图标
-cp /Applications/Claude.app/Contents/Resources/electron.icns \
-   ~/.local/share/claude-notify/ClaudeNotify.app/Contents/Resources/AppIcon.icns
-
-# 创建 Info.plist
-cat > ~/.local/share/claude-notify/ClaudeNotify.app/Contents/Info.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>ClaudeNotify</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.claude.notify</string>
-    <key>CFBundleName</key>
-    <string>Claude Notify</string>
-    <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>LSUIElement</key>
-    <true/>
-</dict>
-</plist>
-EOF
-```
+- `claude-notify` - 启动脚本
+- `ClaudeNotify.swift` - Swift 通知应用源码
 
 ## License
 

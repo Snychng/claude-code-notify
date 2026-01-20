@@ -2,7 +2,7 @@ import Foundation
 import Cocoa
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCenterDelegate {
-    var targetWindowTitle: String?
+    var timeoutTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSUserNotificationCenter.default.delegate = self
@@ -10,26 +10,46 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCenterDele
         let args = CommandLine.arguments
         let message = args.count > 1 ? args[1] : "等待输入"
         let title = args.count > 2 ? args[2] : "Claude Code"
-        targetWindowTitle = args.count > 3 ? args[3] : nil
 
         let notif = NSUserNotification()
         notif.title = title
         notif.informativeText = message
         notif.soundName = NSUserNotificationDefaultSoundName
-        if let windowTitle = targetWindowTitle {
-            notif.userInfo = ["windowTitle": windowTitle]
-        }
 
         NSUserNotificationCenter.default.deliver(notif)
 
-        // 发送后立即退出，点击处理交给系统
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // 60 秒后自动退出
+        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: false) { _ in
             NSApp.terminate(nil)
         }
     }
 
     func userNotificationCenter(_ center: NSUserNotificationCenter, shouldPresent notification: NSUserNotification) -> Bool {
         return true
+    }
+
+    func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
+        timeoutTimer?.invalidate()
+
+        // 激活 Ghostty 并跳转到 Claude Code 窗口
+        let script = """
+        tell application "System Events"
+            tell process "Ghostty"
+                set frontmost to true
+                repeat with w in windows
+                    if name of w contains "Claude Code" then
+                        perform action "AXRaise" of w
+                        exit repeat
+                    end if
+                end repeat
+            end tell
+        end tell
+        """
+
+        if let appleScript = NSAppleScript(source: script) {
+            appleScript.executeAndReturnError(nil)
+        }
+        NSApp.terminate(nil)
     }
 }
 
